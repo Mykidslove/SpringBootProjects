@@ -1,37 +1,35 @@
 pipeline {
-agent any
+    agent any
 
-```
-tools {
-    maven 'Maven'
-}
-
-stages {
-
-    stage('Checkout') {
-        steps {
-            git 'https://github.com/Mykidslove/SpringBootProjects.git'
-        }
+    tools {
+        maven 'Maven'
     }
 
-    stage('Build') {
-        steps {
-            sh 'mvn clean package'
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/Mykidslove/SpringBootProjects.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sh '''
+                scp -o StrictHostKeyChecking=no target/*.jar ec2-user@13.212.91.129:/home/ec2-user/app.jar
+
+                ssh -o StrictHostKeyChecking=no ec2-user@13.212.91.129 "
+                    pkill -f 'java -jar' || true
+                    nohup java -jar /home/ec2-user/app.jar > app.log 2>&1 &
+                "
+                '''
+            }
         }
     }
-
-    stage('Deploy') {
-        steps {
-            sh '''
-            scp -o StrictHostKeyChecking=no target/*.jar ec2-user@13.212.91.129:/home/ec2-user/
-            ssh -o StrictHostKeyChecking=no ec2-user@13.212.91.129 "
-                pkill -f java || true
-                nohup java -jar /home/ec2-user/*.jar > app.log 2>&1 &
-            "
-            '''
-        }
-    }
-}
-```
-
 }
